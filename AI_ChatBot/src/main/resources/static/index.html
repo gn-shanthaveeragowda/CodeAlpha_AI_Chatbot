@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMate AI Chatbot</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="app-shell">
+    <section class="chat-panel">
+        <aside class="side-rail">
+            <div class="brand-mark" aria-hidden="true">&lt;/&gt;</div>
+            <div class="rail-copy">
+                <p class="eyebrow">JAVA LEARNING LAB</p>
+                <h1>CodeMate</h1>
+                <p>NLP and machine learning, answering one question at a time.</p>
+            </div>
+
+            <nav class="rail-nav" aria-label="Sections">
+                <button type="button" class="rail-tab is-active" data-tab="chat">Chat</button>
+                <button type="button" class="rail-tab" data-tab="insights">Insights</button>
+                <button type="button" class="rail-tab" data-tab="teach">Teach</button>
+            </nav>
+
+            <div class="progress-card">
+                <span class="progress-label">MODEL</span>
+                <strong id="modelAccuracy">training&hellip;</strong>
+                <div class="progress-track"><span id="progressBar"></span></div>
+                <small id="modelSummary">Loading classifier status</small>
+            </div>
+            <p class="rail-footer"><span class="status-dot"></span> <span id="railStatus">Mentor online</span></p>
+        </aside>
+
+        <div class="chat-workspace">
+
+            <!-- ------------------------------------------------------ CHAT -->
+            <section class="tab-panel is-active" data-panel="chat">
+                <header class="chat-header">
+                    <div>
+                        <p class="eyebrow">CONVERSATION / JAVA FOUNDATIONS</p>
+                        <h2>Ask, explore, understand.</h2>
+                        <p class="subtitle">Say <em>tell me more</em> to go deeper, or <em>show me an example</em> for code.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="debugToggle" class="secondary-button" type="button" aria-pressed="false">
+                            <span aria-hidden="true">&#9673;</span> Show reasoning
+                        </button>
+                        <button id="clearButton" class="secondary-button" type="button">
+                            <span aria-hidden="true">&#8634;</span> New session
+                        </button>
+                    </div>
+                </header>
+
+                <div class="topic-bar" aria-label="Suggested topics">
+                    <span class="topic-label">Try a topic</span>
+                    <button type="button" data-question="What is OOP?">OOP <span>&rarr;</span></button>
+                    <button type="button" data-question="Explain inheritance">Inheritance <span>&rarr;</span></button>
+                    <button type="button" data-question="How does a HashMap work internally?">HashMap <span>&rarr;</span></button>
+                    <button type="button" data-question="What is JDBC?">JDBC <span>&rarr;</span></button>
+                    <button type="button" data-question="How do you work?">How I think <span>&rarr;</span></button>
+                    <button type="button" data-question="What can you help me with?">Everything <span>&rarr;</span></button>
+                </div>
+
+                <section id="messages" class="messages" aria-live="polite">
+                    <div class="welcome-note">
+                        <span>START HERE</span>
+                        <p>Pick a prompt above or ask your own question. Typos are fine, I correct them.</p>
+                    </div>
+                </section>
+
+                <form id="chatForm" class="composer">
+                    <label class="sr-only" for="messageInput">Type your question</label>
+                    <input id="messageInput" name="message" type="text" maxlength="500" autocomplete="off"
+                           placeholder="Ask a Java question..." required>
+                    <button id="sendButton" class="send-button" type="submit">
+                        <span>Send question</span><span aria-hidden="true">&rarr;</span>
+                    </button>
+                </form>
+                <p class="disclaimer">Porter stemming &middot; TF-IDF &middot; Naive Bayes &middot; Rate answers to teach me</p>
+            </section>
+
+            <!-- -------------------------------------------------- INSIGHTS -->
+            <section class="tab-panel" data-panel="insights">
+                <header class="chat-header">
+                    <div>
+                        <p class="eyebrow">ANALYTICS / MODEL PERFORMANCE</p>
+                        <h2>How well am I doing?</h2>
+                        <p class="subtitle">Live conversation statistics and cross-validated classifier quality.</p>
+                    </div>
+                    <button id="refreshInsights" class="secondary-button" type="button">
+                        <span aria-hidden="true">&#8635;</span> Refresh
+                    </button>
+                </header>
+                <div class="scroll-area">
+                    <div id="statGrid" class="stat-grid"></div>
+
+                    <h3 class="section-heading">Classifier quality</h3>
+                    <div id="modelPanel" class="info-panel">Loading&hellip;</div>
+
+                    <h3 class="section-heading">Most asked topics</h3>
+                    <div id="topIntents" class="bar-list"></div>
+
+                    <h3 class="section-heading">Which engine answered</h3>
+                    <div id="strategyList" class="bar-list"></div>
+
+                    <h3 class="section-heading">Questions I could not answer</h3>
+                    <p class="section-note">These are the training gaps. Teach me one on the Teach tab.</p>
+                    <div id="gapList" class="gap-list"></div>
+                </div>
+            </section>
+
+            <!-- ----------------------------------------------------- TEACH -->
+            <section class="tab-panel" data-panel="teach">
+                <header class="chat-header">
+                    <div>
+                        <p class="eyebrow">TRAINING / SUPERVISED LEARNING</p>
+                        <h2>Teach me something new.</h2>
+                        <p class="subtitle">Every change retrains the model immediately, no restart needed.</p>
+                    </div>
+                </header>
+                <div class="scroll-area">
+                    <div class="teach-card">
+                        <h3>Add a question to an existing topic</h3>
+                        <p class="section-note">Use this when I answered wrongly but the topic already exists.</p>
+                        <label class="field">
+                            <span>Topic</span>
+                            <select id="teachIntent"></select>
+                        </label>
+                        <label class="field">
+                            <span>Question wording</span>
+                            <input id="teachExample" type="text" placeholder="e.g. how does extends work in java">
+                        </label>
+                        <button id="teachExampleButton" class="send-button" type="button">
+                            <span>Teach and retrain</span><span aria-hidden="true">&rarr;</span>
+                        </button>
+                    </div>
+
+                    <div class="teach-card">
+                        <h3>Create a whole new topic</h3>
+                        <p class="section-note">Give me a few ways people might ask it, plus the answer.</p>
+                        <label class="field">
+                            <span>Topic name</span>
+                            <input id="newIntentName" type="text" placeholder="e.g. enum_types">
+                        </label>
+                        <label class="field">
+                            <span>Example questions, one per line</span>
+                            <textarea id="newIntentExamples" rows="4"
+                                      placeholder="what is an enum&#10;how do enums work&#10;enum in java"></textarea>
+                        </label>
+                        <label class="field">
+                            <span>Answer</span>
+                            <textarea id="newIntentAnswer" rows="3"
+                                      placeholder="An enum is a special type that represents a fixed set of constants."></textarea>
+                        </label>
+                        <label class="field">
+                            <span>Deeper explanation (optional)</span>
+                            <textarea id="newIntentDetail" rows="2"></textarea>
+                        </label>
+                        <button id="createIntentButton" class="send-button" type="button">
+                            <span>Create and retrain</span><span aria-hidden="true">&rarr;</span>
+                        </button>
+                    </div>
+
+                    <div id="teachResult" class="teach-result" role="status"></div>
+                </div>
+            </section>
+        </div>
+    </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

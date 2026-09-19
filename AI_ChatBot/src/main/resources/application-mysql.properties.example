@@ -1,0 +1,9 @@
+# Copy these settings into application.properties when MySQL is configured.
+spring.datasource.url=jdbc:mysql://localhost:3306/ai_chatbot?createDatabaseIfNotExist=true&serverTimezone=UTC
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.username=root
+spring.datasource.password=CHANGE_ME
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.open-in-view=false
+
+chatbot.confidence-threshold=0.35

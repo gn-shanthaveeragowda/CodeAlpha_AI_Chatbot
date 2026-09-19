@@ -1,0 +1,853 @@
+{
+  "version": "2.0",
+  "description": "FAQ knowledge base for the CodeMate AI chatbot. Each intent holds training examples and three layers of answer: PRIMARY for the first reply, DETAIL for 'tell me more', EXAMPLE for 'show me code'.",
+  "intents": [
+    {
+      "name": "greeting",
+      "description": "A friendly greeting",
+      "category": "Conversation",
+      "examples": [
+        "hi", "hello", "hey there", "good morning", "good evening", "good afternoon",
+        "how are you", "is anyone there", "nice to meet you", "hello bot", "hey can you help me",
+        "greetings"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Hello! I am CodeMate, your Java learning assistant. Ask me about Java, OOP, collections, databases or Spring Boot.",
+          "Hi there! What would you like to learn about today? Java basics, OOP concepts and SQL are all good places to start.",
+          "Hey! Good to see you. Ask me any programming question and I will do my best to explain it clearly."
+        ],
+        "DETAIL": [
+          "I am a rule-based and machine learning chatbot built in Java. I classify your question into one of my trained intents and reply with the answer I learned for it. Type 'help' to see everything I cover."
+        ]
+      }
+    },
+    {
+      "name": "goodbye",
+      "description": "A farewell",
+      "category": "Conversation",
+      "examples": [
+        "bye", "goodbye", "see you", "see you later", "talk to you later", "exit", "quit",
+        "catch you later", "i am leaving", "that is all for now", "good night"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Goodbye! Keep building and keep asking questions.",
+          "See you next time. Happy coding!",
+          "Take care. Come back whenever you get stuck on something."
+        ]
+      }
+    },
+    {
+      "name": "thanks",
+      "description": "Gratitude",
+      "category": "Conversation",
+      "examples": [
+        "thanks", "thank you", "thanks a lot", "that helped", "great thanks", "appreciate it",
+        "that was useful", "perfect thank you", "you are helpful", "nice explanation"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "You are welcome! Keep the questions coming.",
+          "Glad that helped. Ask me anything else you are curious about.",
+          "Happy to help. What shall we look at next?"
+        ]
+      }
+    },
+    {
+      "name": "bot_identity",
+      "description": "Questions about the chatbot itself",
+      "category": "Conversation",
+      "examples": [
+        "who are you", "what is your name", "what are you", "are you a robot", "are you human",
+        "who made you", "who built you", "what can you do", "tell me about yourself"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "I am CodeMate, an AI chatbot written in Java with Spring Boot. I use natural language processing and a trained classifier to understand questions about programming."
+        ],
+        "DETAIL": [
+          "Under the hood I normalize your text, correct typos, expand synonyms, remove stop words, apply Porter stemming and build word and bigram features. Those features go to an ensemble of a Naive Bayes classifier and a TF-IDF cosine similarity matcher, which together pick the intent behind your question. Ask me 'how do you work' for the full walkthrough."
+        ]
+      }
+    },
+    {
+      "name": "how_bot_works",
+      "description": "How the chatbot processes a message",
+      "category": "Conversation",
+      "examples": [
+        "how do you work", "how do you understand me", "what nlp do you use",
+        "how do you detect intent", "explain your algorithm", "what machine learning do you use",
+        "how are you trained", "how do you classify questions", "what model do you use"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Every message runs through a seven stage NLP pipeline, then an ensemble classifier picks the intent. The stages are normalization, tokenization, spell correction, synonym mapping, stop word removal, Porter stemming and n-gram extraction."
+        ],
+        "DETAIL": [
+          "After the pipeline produces features, three models score every intent. Multinomial Naive Bayes applies Bayes' rule using word probabilities learned per intent. A TF-IDF cosine similarity model compares your message to every training example as a vector. A keyword coverage score measures how much of your message an intent's vocabulary explains. The three scores are blended with weights of 0.35, 0.45 and 0.20. If the winner clears the confidence threshold you get its answer, otherwise you get a fallback with suggestions, and the question is logged for training."
+        ],
+        "EXAMPLE": [
+          "Take the message \"whats inheritence in java\":\n1. Normalize  -> \"what is inheritence in java\"\n2. Spell fix  -> \"inheritence\" becomes \"inheritance\"\n3. Synonyms   -> unchanged\n4. Stop words -> [what, inheritance, java]\n5. Stemming   -> [what, inherit, java]\n6. Bigrams    -> [what_inherit, inherit_java]\n7. Classify   -> intent \"inheritance\" at 0.87 confidence"
+        ]
+      }
+    },
+    {
+      "name": "help",
+      "description": "What the bot can help with",
+      "category": "Conversation",
+      "examples": [
+        "help", "what can i ask", "show available topics", "how can you help me",
+        "give me some topics", "what do you know", "list your topics", "what subjects do you cover",
+        "i need help"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "I can explain Java basics, OOP concepts, collections, exceptions, streams and lambdas, multithreading, file handling, JDBC, SQL, databases, Spring Boot, REST APIs, testing and Git. Ask a question in your own words and I will find the best match."
+        ],
+        "DETAIL": [
+          "A few things that make the conversation smoother: say 'tell me more' to get a deeper explanation of the last topic, say 'show me an example' for code, and use the thumbs up or down buttons so I learn which answers worked. If I get something wrong you can correct my intent and I retrain on the spot."
+        ]
+      }
+    },
+    {
+      "name": "java",
+      "description": "The Java language overall",
+      "category": "Java Basics",
+      "examples": [
+        "what is java", "explain java", "tell me about java", "why use java",
+        "java programming language", "what does java do", "is java good for beginners",
+        "what is java used for", "features of java", "why is java popular"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Java is a high level, object oriented, statically typed language designed to run anywhere. You compile source code to bytecode once, and any machine with a Java Virtual Machine can run it."
+        ],
+        "DETAIL": [
+          "Java's main strengths are portability through the JVM, automatic memory management with garbage collection, strong typing that catches errors at compile time, a huge standard library and a mature ecosystem. It dominates enterprise backends, Android apps and big data tools such as Hadoop and Kafka. The trade off is that Java is more verbose than languages like Python and starts up more slowly than native code."
+        ],
+        "EXAMPLE": [
+          "public class Hello {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, world!\");\n    }\n}\n\nCompile and run:\n  javac Hello.java\n  java Hello"
+        ]
+      }
+    },
+    {
+      "name": "jvm_jdk_jre",
+      "description": "JVM, JRE and JDK",
+      "category": "Java Basics",
+      "examples": [
+        "what is jvm", "difference between jdk and jre", "what is the jre", "what does the jvm do",
+        "jdk vs jre vs jvm", "do i need the jdk or the jre", "what is bytecode",
+        "how does java run on any platform"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "The JVM runs Java bytecode. The JRE is the JVM plus the core libraries needed to run programs. The JDK is the JRE plus the developer tools such as the compiler, so you need the JDK to write Java and only the JRE to run it."
+        ],
+        "DETAIL": [
+          "The compiler turns your .java source into platform neutral .class bytecode. The JVM for each operating system interprets that bytecode and increasingly compiles the hot paths to native machine code with its just in time compiler. That indirection is what 'write once, run anywhere' actually means: the bytecode is identical everywhere and only the JVM differs."
+        ]
+      }
+    },
+    {
+      "name": "variables_types",
+      "description": "Variables and data types",
+      "category": "Java Basics",
+      "examples": [
+        "what is a variable", "java data types", "primitive data types", "how do variables work",
+        "difference between int and double", "what is a string in java", "what is type casting",
+        "primitive vs reference types", "what is autoboxing"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A variable is a named box that holds a value of a declared type. Java has eight primitive types (byte, short, int, long, float, double, char, boolean) and reference types such as String, arrays and any class you write."
+        ],
+        "DETAIL": [
+          "Primitives store the value directly and live on the stack when they are local. Reference types store an address that points to an object on the heap, which is why two variables can refer to the same object. Each primitive has a wrapper class (int to Integer, double to Double) and the compiler converts between them automatically, which is called autoboxing. Widening conversions such as int to long are automatic, while narrowing ones need an explicit cast and may lose data."
+        ],
+        "EXAMPLE": [
+          "int count = 10;              // primitive\ndouble price = 99.95;        // primitive\nboolean active = true;       // primitive\nString name = \"CodeMate\";    // reference type\n\nint truncated = (int) price; // explicit cast, gives 99\nInteger boxed = count;       // autoboxing"
+        ]
+      }
+    },
+    {
+      "name": "operators",
+      "description": "Java operators",
+      "category": "Java Basics",
+      "examples": [
+        "what are operators in java", "arithmetic operators", "difference between == and equals",
+        "what is the ternary operator", "logical operators in java", "what does modulus do",
+        "bitwise operators", "increment and decrement operators"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Operators act on values: arithmetic (+ - * / %), relational (== != < >), logical (&& || !), assignment (= += -=), bitwise (& | ^ << >>) and the ternary conditional (?:)."
+        ],
+        "DETAIL": [
+          "The trap that catches almost everyone is == versus equals. For primitives == compares values. For objects == compares references, meaning 'are these the same object', while equals compares contents if the class overrides it. Always use equals for Strings. The && and || operators short circuit, so the right side is skipped when the answer is already decided, which makes null checks such as (user != null && user.isActive()) safe."
+        ],
+        "EXAMPLE": [
+          "String a = new String(\"hi\");\nString b = new String(\"hi\");\nSystem.out.println(a == b);       // false, different objects\nSystem.out.println(a.equals(b));  // true, same characters\n\nint max = (x > y) ? x : y;        // ternary\nint remainder = 17 % 5;           // 2"
+        ]
+      }
+    },
+    {
+      "name": "control_flow",
+      "description": "Conditional statements",
+      "category": "Java Basics",
+      "examples": [
+        "what is an if statement", "how does if else work", "what is a switch statement",
+        "conditional statements in java", "switch vs if else", "how to write a switch case",
+        "decision making in java"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Conditionals choose which code runs. Use if, else if and else for general conditions, and switch when you are comparing one value against many fixed options."
+        ],
+        "DETAIL": [
+          "Modern Java has switch expressions with arrow labels, which return a value and do not fall through, so you no longer need a break on every branch. Switch works on int, char, String, enums and, from Java 21, on patterns that test the type of an object."
+        ],
+        "EXAMPLE": [
+          "int score = 85;\nif (score >= 90) {\n    System.out.println(\"A\");\n} else if (score >= 80) {\n    System.out.println(\"B\");\n} else {\n    System.out.println(\"C\");\n}\n\nString day = switch (number) {\n    case 1, 7 -> \"Weekend\";\n    case 2, 3, 4, 5, 6 -> \"Weekday\";\n    default -> \"Unknown\";\n};"
+        ]
+      }
+    },
+    {
+      "name": "loops",
+      "description": "Loops and iteration",
+      "category": "Java Basics",
+      "examples": [
+        "what is a loop", "for loop in java", "while loop", "do while loop",
+        "difference between for and while", "enhanced for loop", "how to iterate over an array",
+        "what is an infinite loop", "break and continue"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Loops repeat a block of code. Use for when you know the number of iterations, while when you loop until a condition changes, do while when the body must run at least once, and the enhanced for loop to walk a collection or array."
+        ],
+        "DETAIL": [
+          "break exits the loop immediately and continue skips to the next iteration. An infinite loop happens when the condition never becomes false, usually because the counter is never updated. The enhanced for loop is safer for iteration because there is no index to get wrong, but you cannot modify the collection while it runs or you get a ConcurrentModificationException."
+        ],
+        "EXAMPLE": [
+          "for (int i = 0; i < 5; i++) {\n    System.out.println(i);\n}\n\nint[] numbers = {3, 7, 11};\nfor (int number : numbers) {\n    System.out.println(number);\n}\n\nint i = 0;\nwhile (i < 5) {\n    i++;\n}"
+        ]
+      }
+    },
+    {
+      "name": "methods",
+      "description": "Methods and parameters",
+      "category": "Java Basics",
+      "examples": [
+        "what is a method", "java methods explained", "how to create a method",
+        "method parameters and return type", "why use methods", "what is method signature",
+        "what is a void method", "pass by value in java", "what is varargs"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A method is a named block of reusable behaviour. It takes zero or more parameters, runs its body and either returns a value or is declared void."
+        ],
+        "DETAIL": [
+          "The signature is the method name plus its parameter types, and it is what the compiler uses to pick between overloads. Java is strictly pass by value: for primitives the value is copied, and for objects the reference is copied, so a method can change the object's fields but cannot make the caller's variable point somewhere else. Methods keep code readable, testable and free of duplication."
+        ],
+        "EXAMPLE": [
+          "public int add(int a, int b) {\n    return a + b;\n}\n\npublic void greet(String name) {\n    System.out.println(\"Hello \" + name);\n}\n\npublic int sum(int... numbers) {   // varargs\n    int total = 0;\n    for (int n : numbers) total += n;\n    return total;\n}"
+        ]
+      }
+    },
+    {
+      "name": "arrays",
+      "description": "Arrays",
+      "category": "Java Basics",
+      "examples": [
+        "what is an array", "how to declare an array", "arrays in java",
+        "two dimensional array", "array index out of bounds", "how to find array length",
+        "array vs arraylist", "how to sort an array"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "An array is a fixed size, indexed block of values that all share one type. Indexes start at zero, and the size is set when the array is created and cannot change."
+        ],
+        "DETAIL": [
+          "Because the size is fixed, adding an element means creating a bigger array and copying across, which is exactly what ArrayList does for you. Reading past the last index throws ArrayIndexOutOfBoundsException, a very common beginner error caused by looping to length instead of length minus one. Use the Arrays utility class for sorting, filling, copying and printing."
+        ],
+        "EXAMPLE": [
+          "int[] numbers = new int[5];\nnumbers[0] = 10;\n\nString[] names = {\"Asha\", \"Ravi\", \"Meera\"};\nSystem.out.println(names.length);   // 3\n\nint[][] grid = new int[3][4];       // 2D array\nArrays.sort(numbers);\nSystem.out.println(Arrays.toString(names));"
+        ]
+      }
+    },
+    {
+      "name": "strings",
+      "description": "Strings and text handling",
+      "category": "Java Basics",
+      "examples": [
+        "what is a string", "string methods in java", "why are strings immutable",
+        "string vs stringbuilder", "how to compare strings", "how to concatenate strings",
+        "what is the string pool", "how to split a string"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A String is an immutable sequence of characters. Every operation that looks like it changes a String actually returns a new one, which is why you compare Strings with equals and never with ==."
+        ],
+        "DETAIL": [
+          "Immutability makes Strings safe to share between threads and lets the JVM cache literals in the string pool, so two identical literals are the same object. The cost is that building text in a loop with + creates a new object each time. Use StringBuilder for that: it is mutable and does the work in one buffer. StringBuffer is the older synchronized version and is rarely needed."
+        ],
+        "EXAMPLE": [
+          "String name = \"CodeMate\";\nSystem.out.println(name.length());          // 8\nSystem.out.println(name.toUpperCase());     // CODEMATE\nSystem.out.println(name.substring(0, 4));   // Code\nSystem.out.println(name.contains(\"Mate\"));  // true\n\nStringBuilder builder = new StringBuilder();\nfor (int i = 0; i < 5; i++) builder.append(i);\nSystem.out.println(builder);                // 01234"
+        ]
+      }
+    },
+    {
+      "name": "oop",
+      "description": "Object oriented programming overall",
+      "category": "OOP",
+      "examples": [
+        "what is oop", "explain object oriented programming", "oop concepts",
+        "four pillars of oop", "why use oop", "principles of oop", "meaning of oops",
+        "what are the main oop concepts", "advantages of object oriented programming"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Object oriented programming organises software around objects that bundle data with the behaviour that acts on it. Its four pillars are encapsulation, inheritance, polymorphism and abstraction."
+        ],
+        "DETAIL": [
+          "Encapsulation hides internal state behind methods. Inheritance lets one class build on another. Polymorphism lets one call site work with many implementations. Abstraction exposes what something does while hiding how. Together they make large systems easier to change, because a well designed object can be rewritten inside without breaking anything outside it. Ask me about any pillar by name for a deeper explanation."
+        ],
+        "EXAMPLE": [
+          "class Account {\n    private double balance;                 // encapsulation\n\n    public void deposit(double amount) {    // controlled access\n        if (amount > 0) balance += amount;\n    }\n    public double getBalance() { return balance; }\n}\n\nclass SavingsAccount extends Account {      // inheritance\n    public void addInterest() { deposit(getBalance() * 0.04); }\n}"
+        ]
+      }
+    },
+    {
+      "name": "class_object",
+      "description": "Classes and objects",
+      "category": "OOP",
+      "examples": [
+        "what is a class", "what is an object", "difference between class and object",
+        "how to create an object", "explain objects in java", "what is an instance",
+        "what is the new keyword", "class vs instance"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A class is a blueprint that describes fields and methods. An object is a concrete instance created from that blueprint with the new keyword, and each object has its own copy of the fields."
+        ],
+        "DETAIL": [
+          "Think of the class as the architectural drawing and objects as the houses built from it. The drawing exists once, the houses exist many times and each has its own paint colour. In memory, new allocates space on the heap, runs the constructor and returns a reference. When nothing refers to an object any more the garbage collector reclaims it."
+        ],
+        "EXAMPLE": [
+          "class Student {\n    String name;\n    int rollNumber;\n\n    Student(String name, int rollNumber) {\n        this.name = name;\n        this.rollNumber = rollNumber;\n    }\n    void display() {\n        System.out.println(rollNumber + \" - \" + name);\n    }\n}\n\nStudent first = new Student(\"Asha\", 101);\nStudent second = new Student(\"Ravi\", 102);\nfirst.display();"
+        ]
+      }
+    },
+    {
+      "name": "constructor",
+      "description": "Constructors",
+      "category": "OOP",
+      "examples": [
+        "what is a constructor", "types of constructor", "default constructor",
+        "constructor overloading", "difference between constructor and method",
+        "what is the this keyword", "what does super do", "can a constructor be private"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A constructor is a special block that runs when an object is created. It has the same name as the class, has no return type, and its job is to put the new object into a valid starting state."
+        ],
+        "DETAIL": [
+          "If you write no constructor the compiler gives you a no argument default one, but that disappears as soon as you declare any constructor yourself. You can overload constructors to offer several ways of building the object. Inside one, this(...) calls another constructor of the same class and super(...) calls the parent's, and either must be the first statement. A private constructor blocks outside instantiation, which is how singletons and utility classes are written."
+        ],
+        "EXAMPLE": [
+          "class Book {\n    private String title;\n    private double price;\n\n    Book(String title) {\n        this(title, 0.0);          // calls the other constructor\n    }\n    Book(String title, double price) {\n        this.title = title;\n        this.price = price;\n    }\n}"
+        ]
+      }
+    },
+    {
+      "name": "inheritance",
+      "description": "Inheritance",
+      "category": "OOP",
+      "examples": [
+        "what is inheritance", "explain inheritance", "inheritance in java",
+        "what is the extends keyword", "parent and child class", "types of inheritance in java",
+        "why does java not support multiple inheritance", "what is a superclass",
+        "how does inheritance reuse code"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Inheritance lets a child class reuse the fields and methods of a parent class using the extends keyword, and then add or change behaviour of its own. It models an 'is a' relationship."
+        ],
+        "DETAIL": [
+          "Java supports single inheritance for classes and multiple inheritance of type through interfaces. Classes are limited to one parent to avoid the diamond problem, where two parents offer conflicting versions of the same method and the compiler cannot choose. A child can call the parent's version with super, and a class marked final cannot be extended at all. Favour composition over inheritance when the relationship is really 'has a' rather than 'is a'."
+        ],
+        "EXAMPLE": [
+          "class Vehicle {\n    void start() { System.out.println(\"Vehicle starting\"); }\n}\n\nclass Car extends Vehicle {\n    void start() {\n        super.start();\n        System.out.println(\"Car engine running\");\n    }\n    void openBoot() { System.out.println(\"Boot open\"); }\n}\n\nnew Car().start();"
+        ]
+      }
+    },
+    {
+      "name": "polymorphism",
+      "description": "Polymorphism",
+      "category": "OOP",
+      "examples": [
+        "what is polymorphism", "explain polymorphism", "polymorphism in java",
+        "method overloading and overriding", "difference between overloading and overriding",
+        "runtime polymorphism", "compile time polymorphism", "what is dynamic method dispatch",
+        "many forms in oop"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Polymorphism means one name can take many forms. Overloading gives several methods the same name with different parameters and is resolved at compile time. Overriding lets a subclass replace a parent method and is resolved at run time."
+        ],
+        "DETAIL": [
+          "Runtime polymorphism is what makes flexible design possible: a variable declared as the parent type can hold any subclass, and the JVM picks the actual implementation from the object, not the variable. That is dynamic method dispatch. It is why you can write a method that takes a List and pass an ArrayList or a LinkedList without changing a line."
+        ],
+        "EXAMPLE": [
+          "class Shape {\n    double area() { return 0; }\n}\nclass Circle extends Shape {\n    double radius = 2;\n    double area() { return Math.PI * radius * radius; }   // overriding\n}\n\nShape shape = new Circle();      // parent reference, child object\nSystem.out.println(shape.area()); // calls Circle.area at runtime\n\nint add(int a, int b) { return a + b; }             // overloading\ndouble add(double a, double b) { return a + b; }"
+        ]
+      }
+    },
+    {
+      "name": "encapsulation",
+      "description": "Encapsulation",
+      "category": "OOP",
+      "examples": [
+        "what is encapsulation", "explain encapsulation", "encapsulation in java",
+        "what is data hiding", "private variables getters and setters", "why use private fields",
+        "what are access modifiers", "difference between public private and protected"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Encapsulation keeps an object's data private and exposes only controlled access through methods. That way the object can validate every change instead of trusting the outside world."
+        ],
+        "DETAIL": [
+          "Java has four access levels: private is visible only inside the class, default (no keyword) inside the package, protected inside the package and to subclasses, and public everywhere. The practical benefit is that you can change how a field is stored, or add validation later, without breaking any caller, because callers only ever touched the methods."
+        ],
+        "EXAMPLE": [
+          "class BankAccount {\n    private double balance;                    // hidden state\n\n    public void deposit(double amount) {\n        if (amount <= 0) {\n            throw new IllegalArgumentException(\"Deposit must be positive\");\n        }\n        balance += amount;\n    }\n    public double getBalance() {\n        return balance;\n    }\n}\n// account.balance = -500; will not compile"
+        ]
+      }
+    },
+    {
+      "name": "abstraction",
+      "description": "Abstraction",
+      "category": "OOP",
+      "examples": [
+        "what is abstraction", "explain abstraction", "abstraction in java",
+        "what is an abstract class", "how to hide implementation details",
+        "difference between abstraction and encapsulation", "when to use abstract class"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Abstraction exposes what an object does while hiding how it does it. In Java you achieve it with abstract classes and interfaces, which declare behaviour without committing to an implementation."
+        ],
+        "DETAIL": [
+          "The difference from encapsulation is easy to mix up. Encapsulation is about hiding data behind methods; abstraction is about hiding complexity behind a simpler contract. A driver uses a steering wheel without knowing the steering mechanism, which is abstraction. The wheel refusing to let you reach inside the column is encapsulation. An abstract class cannot be instantiated and may mix abstract methods with real ones."
+        ],
+        "EXAMPLE": [
+          "abstract class Payment {\n    abstract void pay(double amount);      // what, not how\n\n    void receipt(double amount) {          // shared implementation\n        System.out.println(\"Paid \" + amount);\n    }\n}\n\nclass UpiPayment extends Payment {\n    void pay(double amount) {\n        System.out.println(\"Paying \" + amount + \" over UPI\");\n    }\n}"
+        ]
+      }
+    },
+    {
+      "name": "interface_abstract",
+      "description": "Interfaces versus abstract classes",
+      "category": "OOP",
+      "examples": [
+        "what is an interface", "interface vs abstract class", "when to use an interface",
+        "can an interface have methods with a body", "what is a default method",
+        "how does java achieve multiple inheritance", "what is the implements keyword",
+        "functional interface"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "An interface is a pure contract: a set of method signatures a class promises to provide with implements. A class can implement many interfaces but extend only one class, so interfaces are how Java gets multiple inheritance of type."
+        ],
+        "DETAIL": [
+          "Since Java 8 an interface can also carry default and static methods with bodies, which lets libraries add methods without breaking existing implementations. Choose an interface when unrelated classes need to share a capability, such as Comparable or Runnable. Choose an abstract class when related classes share both state and partial implementation. A functional interface has exactly one abstract method and can be written as a lambda."
+        ],
+        "EXAMPLE": [
+          "interface Drawable {\n    void draw();                              // abstract by default\n    default void describe() {                 // default method\n        System.out.println(\"A drawable shape\");\n    }\n}\n\nclass Square implements Drawable {\n    public void draw() { System.out.println(\"Drawing a square\"); }\n}"
+        ]
+      }
+    },
+    {
+      "name": "static_final",
+      "description": "The static and final keywords",
+      "category": "OOP",
+      "examples": [
+        "what is the static keyword", "what does final mean in java",
+        "difference between static and final", "what is a static method",
+        "what is a static variable", "can we override a static method",
+        "what is a constant in java", "why is main static"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "static means the member belongs to the class rather than to any instance, so it is shared by all objects and can be used without creating one. final means it cannot change: a final variable is a constant, a final method cannot be overridden and a final class cannot be extended."
+        ],
+        "DETAIL": [
+          "main is static because the JVM has to call it before any object exists. Static methods cannot use this or touch instance fields, and they are hidden rather than overridden when a subclass declares the same signature. Combining static and final gives you a shared constant, conventionally written in upper case with underscores."
+        ],
+        "EXAMPLE": [
+          "class Counter {\n    static int total = 0;                       // shared by all objects\n    static final double PI = 3.14159;           // constant\n\n    Counter() { total++; }\n\n    static int getTotal() { return total; }     // no instance needed\n}\n\nnew Counter();\nnew Counter();\nSystem.out.println(Counter.getTotal());         // 2"
+        ]
+      }
+    },
+    {
+      "name": "collections",
+      "description": "The Collections Framework",
+      "category": "Collections",
+      "examples": [
+        "what are collections", "java collections framework", "collections in java",
+        "list set and map", "which collection should i use", "what is the collection hierarchy",
+        "difference between list and set", "what is an iterator"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "The Collections Framework is the standard set of data structures for groups of objects. The three main shapes are List for ordered values that may repeat, Set for unique values, and Map for key to value pairs."
+        ],
+        "DETAIL": [
+          "Pick by the question you need answered. Need order and duplicates? ArrayList. Need fast membership checks and no duplicates? HashSet. Need lookup by key? HashMap. Need sorted order? TreeSet or TreeMap. Need a queue? ArrayDeque. Everything below List, Set and Queue implements Collection and can be walked with an Iterator or the enhanced for loop; Map sits beside them rather than under them."
+        ],
+        "EXAMPLE": [
+          "List<String> names = new ArrayList<>();\nnames.add(\"Asha\");\nnames.add(\"Asha\");            // duplicates allowed\n\nSet<String> unique = new HashSet<>(names);   // size is 1\n\nMap<String, Integer> marks = new HashMap<>();\nmarks.put(\"Asha\", 92);\nSystem.out.println(marks.get(\"Asha\"));"
+        ]
+      }
+    },
+    {
+      "name": "list_types",
+      "description": "ArrayList and LinkedList",
+      "category": "Collections",
+      "examples": [
+        "what is arraylist", "arraylist in java", "how does arraylist work",
+        "arraylist vs linkedlist", "when to use arraylist", "arraylist vs array",
+        "what is a linkedlist", "how does arraylist grow"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "ArrayList stores elements in a resizable array, so reading by index is instant but inserting in the middle shifts everything after it. LinkedList stores nodes joined by references, so inserting and removing at the ends is cheap but reading by index has to walk the chain."
+        ],
+        "DETAIL": [
+          "In practice ArrayList wins almost every time, because indexed access and iteration over contiguous memory are far faster than pointer chasing, and most code reads more than it inserts. Choose LinkedList only when you are constantly adding or removing at the front, and even then ArrayDeque is usually better. When an ArrayList fills up it allocates a larger array, typically around 1.5 times the size, and copies everything across."
+        ],
+        "EXAMPLE": [
+          "List<Integer> scores = new ArrayList<>();\nscores.add(90);\nscores.add(75);\nscores.set(1, 80);\nscores.remove(Integer.valueOf(90));\n\nSystem.out.println(scores.get(0));    // 80\nSystem.out.println(scores.size());    // 1\nfor (int score : scores) System.out.println(score);"
+        ]
+      }
+    },
+    {
+      "name": "hashmap",
+      "description": "HashMap and hashing",
+      "category": "Collections",
+      "examples": [
+        "what is a hashmap", "how does hashmap work internally", "hashmap vs hashtable",
+        "what is hashcode", "why override equals and hashcode", "hashmap vs treemap",
+        "what is a hash collision", "how to iterate over a hashmap"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "HashMap stores key to value pairs and finds a key in roughly constant time by using the key's hashCode to pick a bucket. Keys are unique, order is not guaranteed, and one null key is allowed."
+        ],
+        "DETAIL": [
+          "Lookup works in two steps: hashCode narrows the search to one bucket, then equals confirms the exact key. That is why any class used as a key must override both consistently, otherwise you can store an entry and never find it again. When several keys land in the same bucket they form a list, which converts to a balanced tree once it grows large. Hashtable is the old synchronized version; use ConcurrentHashMap when you need thread safety."
+        ],
+        "EXAMPLE": [
+          "Map<String, Integer> stock = new HashMap<>();\nstock.put(\"apples\", 12);\nstock.put(\"pears\", 5);\nstock.merge(\"apples\", 3, Integer::sum);     // now 15\n\nfor (Map.Entry<String, Integer> entry : stock.entrySet()) {\n    System.out.println(entry.getKey() + \" = \" + entry.getValue());\n}\nSystem.out.println(stock.getOrDefault(\"plums\", 0));   // 0"
+        ]
+      }
+    },
+    {
+      "name": "generics",
+      "description": "Generics",
+      "category": "Collections",
+      "examples": [
+        "what are generics", "why use generics in java", "what does the diamond operator do",
+        "what is type erasure", "generic class example", "what is a bounded type parameter",
+        "what does list of t mean", "wildcards in generics"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Generics let you write a class or method that works with a type supplied later, while the compiler still checks types. List<String> can only hold Strings, so a mistake is a compile error instead of a ClassCastException at run time."
+        ],
+        "DETAIL": [
+          "Generic type information is erased at compile time, which is why you cannot write new T[] or check instanceof List<String>. Bounded parameters such as <T extends Number> restrict what can be supplied, and wildcards describe flexibility at the use site: ? extends Number to read from a collection, ? super Integer to write to one."
+        ],
+        "EXAMPLE": [
+          "class Box<T> {\n    private T item;\n    void put(T item) { this.item = item; }\n    T get() { return item; }\n}\n\nBox<String> box = new Box<>();\nbox.put(\"hello\");\nString value = box.get();      // no cast needed\n\nstatic <T extends Comparable<T>> T max(List<T> values) {\n    return values.stream().max(Comparable::compareTo).orElseThrow();\n}"
+        ]
+      }
+    },
+    {
+      "name": "exception_handling",
+      "description": "Exceptions and error handling",
+      "category": "Advanced Java",
+      "examples": [
+        "what is exception handling", "explain exceptions", "try catch in java",
+        "how to handle errors in java", "checked and unchecked exception",
+        "what is a null pointer exception", "difference between throw and throws",
+        "what does finally do", "what is a custom exception", "error vs exception"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Exception handling deals with problems that appear while a program runs, using try, catch, finally, throw and throws. Code that might fail goes in try, the recovery goes in catch, and cleanup that must always run goes in finally."
+        ],
+        "DETAIL": [
+          "Checked exceptions such as IOException must be caught or declared, because the caller is expected to handle them. Unchecked exceptions extend RuntimeException and usually signal a programming bug, NullPointerException being the classic. Error covers failures you should not try to recover from, such as OutOfMemoryError. Catch the most specific exception you can, never swallow one silently, and prefer try with resources so files and connections close themselves."
+        ],
+        "EXAMPLE": [
+          "try (BufferedReader reader = new BufferedReader(new FileReader(\"data.txt\"))) {\n    System.out.println(reader.readLine());\n} catch (FileNotFoundException e) {\n    System.out.println(\"No such file: \" + e.getMessage());\n} catch (IOException e) {\n    System.out.println(\"Could not read: \" + e.getMessage());\n} finally {\n    System.out.println(\"Always runs\");\n}\n\nclass InsufficientFundsException extends RuntimeException {\n    InsufficientFundsException(String message) { super(message); }\n}"
+        ]
+      }
+    },
+    {
+      "name": "streams",
+      "description": "The Stream API",
+      "category": "Advanced Java",
+      "examples": [
+        "what are java streams", "explain the stream api", "java stream filter and map",
+        "how does the stream api work", "stream vs collection", "what is a terminal operation",
+        "how to collect a stream to a list", "what is lazy evaluation in streams",
+        "parallel streams"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Streams process collections through a readable pipeline of operations such as filter, map, sorted and collect, without changing the original source. They describe what you want rather than how to loop."
+        ],
+        "DETAIL": [
+          "A pipeline has a source, any number of lazy intermediate operations and one terminal operation that triggers the work. Nothing runs until the terminal operation arrives, which lets the runtime fuse the steps into a single pass. A stream can only be consumed once. parallelStream splits the work across threads, which helps on large CPU bound workloads and usually hurts on small ones."
+        ],
+        "EXAMPLE": [
+          "List<String> names = List.of(\"Asha\", \"Ravi\", \"Meera\", \"Arjun\");\n\nList<String> result = names.stream()\n        .filter(name -> name.startsWith(\"A\"))\n        .map(String::toUpperCase)\n        .sorted()\n        .collect(Collectors.toList());\n// [ARJUN, ASHA]\n\nlong count = names.stream().filter(n -> n.length() > 4).count();\nint total = IntStream.rangeClosed(1, 10).sum();"
+        ]
+      }
+    },
+    {
+      "name": "lambda",
+      "description": "Lambda expressions",
+      "category": "Advanced Java",
+      "examples": [
+        "what is a lambda expression", "lambda in java", "how to write a lambda",
+        "what is a functional interface", "what is a method reference",
+        "lambda vs anonymous class", "what is predicate and consumer", "arrow syntax in java"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A lambda is a short way to write a function you can pass around. It implements a functional interface, which is any interface with exactly one abstract method, using the syntax (parameters) -> body."
+        ],
+        "DETAIL": [
+          "Lambdas replaced the anonymous inner classes that used to clutter callback code. The java.util.function package gives you the common shapes: Predicate<T> returns a boolean, Function<T,R> transforms a value, Consumer<T> accepts one and returns nothing, Supplier<T> produces one. When a lambda only calls an existing method you can shorten it to a method reference such as String::toUpperCase. Lambdas can read local variables only if they are effectively final."
+        ],
+        "EXAMPLE": [
+          "Runnable task = () -> System.out.println(\"Running\");\n\nPredicate<String> isLong = text -> text.length() > 5;\nFunction<Integer, Integer> square = n -> n * n;\nConsumer<String> printer = System.out::println;   // method reference\n\nnames.forEach(printer);\nnames.sort((a, b) -> a.compareTo(b));"
+        ]
+      }
+    },
+    {
+      "name": "multithreading",
+      "description": "Threads and concurrency",
+      "category": "Advanced Java",
+      "examples": [
+        "what is multithreading", "how to create a thread in java", "what is a thread",
+        "runnable vs thread", "what is synchronization", "what is a race condition",
+        "what is a deadlock", "what is an executor service", "thread lifecycle"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Multithreading runs several paths of execution inside one program so work can overlap. You create a thread by implementing Runnable and handing it to a Thread or, in real applications, to an ExecutorService."
+        ],
+        "DETAIL": [
+          "Threads share memory, which is both the benefit and the danger. When two threads update the same data at once you get a race condition, and the fix is to synchronize access or use the concurrent collections and atomic classes. A deadlock happens when two threads each hold a lock the other needs and neither can continue; taking locks in a consistent order prevents it. Prefer an ExecutorService thread pool over creating threads by hand, since thread creation is expensive."
+        ],
+        "EXAMPLE": [
+          "Runnable job = () -> System.out.println(Thread.currentThread().getName());\n\nExecutorService pool = Executors.newFixedThreadPool(3);\nfor (int i = 0; i < 5; i++) {\n    pool.submit(job);\n}\npool.shutdown();\n\nclass Counter {\n    private int count;\n    synchronized void increment() { count++; }   // one thread at a time\n}"
+        ]
+      }
+    },
+    {
+      "name": "file_io",
+      "description": "File input and output",
+      "category": "Advanced Java",
+      "examples": [
+        "how to read a file in java", "how to write to a file", "what is file io",
+        "what is bufferedreader", "how to use the files class", "what is serialization",
+        "byte stream vs character stream", "try with resources"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "File I/O reads and writes data outside your program. The modern approach is the java.nio.file.Files class for simple whole file operations, and BufferedReader or BufferedWriter when you need to stream line by line."
+        ],
+        "DETAIL": [
+          "Byte streams (InputStream, OutputStream) handle raw binary data such as images. Character streams (Reader, Writer) handle text and deal with encoding. Buffering matters: reading one byte at a time hits the disk constantly, while a buffered reader fetches a block. Always use try with resources so the file handle closes even when an exception is thrown. Serialization writes an entire object graph to bytes, but it is fragile across versions, so JSON is usually the better choice for persistence."
+        ],
+        "EXAMPLE": [
+          "// Whole file, modern API\nList<String> lines = Files.readAllLines(Path.of(\"notes.txt\"));\nFiles.writeString(Path.of(\"out.txt\"), \"Saved by CodeMate\");\n\n// Streaming, for large files\ntry (BufferedReader reader = Files.newBufferedReader(Path.of(\"notes.txt\"))) {\n    String line;\n    while ((line = reader.readLine()) != null) {\n        System.out.println(line);\n    }\n}"
+        ]
+      }
+    },
+    {
+      "name": "recursion",
+      "description": "Recursion",
+      "category": "Advanced Java",
+      "examples": [
+        "what is recursion", "how does recursion work", "recursive method example",
+        "what is a base case", "recursion vs iteration", "what is stack overflow error",
+        "factorial using recursion", "fibonacci recursion"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Recursion is a method calling itself on a smaller version of the same problem. Every recursive method needs a base case that stops the descent, and a recursive case that moves towards it."
+        ],
+        "DETAIL": [
+          "Each call takes a frame on the call stack, so a missing or unreachable base case gives you StackOverflowError. Recursion shines on naturally nested structures such as trees, file systems and parsers, where the iterative version needs an explicit stack anyway. Naive recursive Fibonacci recomputes the same values exponentially often, which is why it is the standard example for adding memoization."
+        ],
+        "EXAMPLE": [
+          "int factorial(int n) {\n    if (n <= 1) return 1;          // base case\n    return n * factorial(n - 1);   // recursive case\n}\n\nint fibonacci(int n) {\n    if (n < 2) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\nSystem.out.println(factorial(5));  // 120"
+        ]
+      }
+    },
+    {
+      "name": "jdbc",
+      "description": "JDBC database connectivity",
+      "category": "Database",
+      "examples": [
+        "what is jdbc", "explain jdbc", "java database connectivity",
+        "how to connect java to a database", "jdbc steps", "how to query a database in java",
+        "what is a prepared statement", "statement vs preparedstatement",
+        "what is a connection object", "what is a resultset"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "JDBC is the standard Java API for talking to relational databases. You open a Connection, create a PreparedStatement, execute it and read the rows from a ResultSet."
+        ],
+        "DETAIL": [
+          "The steps are: load the driver (automatic since JDBC 4), get a Connection from DriverManager or a pooled DataSource, create a statement, execute a query or update, process the ResultSet and close everything. Always use PreparedStatement rather than string concatenation: it precompiles the SQL, is faster when reused, and it is the correct defence against SQL injection because parameters are never parsed as SQL. In production, connections come from a pool such as HikariCP rather than being opened per request."
+        ],
+        "EXAMPLE": [
+          "String sql = \"SELECT name, marks FROM students WHERE marks > ?\";\n\ntry (Connection connection = DriverManager.getConnection(url, user, password);\n     PreparedStatement statement = connection.prepareStatement(sql)) {\n\n    statement.setInt(1, 60);\n    try (ResultSet rows = statement.executeQuery()) {\n        while (rows.next()) {\n            System.out.println(rows.getString(\"name\") + \" \" + rows.getInt(\"marks\"));\n        }\n    }\n} catch (SQLException e) {\n    e.printStackTrace();\n}"
+        ]
+      }
+    },
+    {
+      "name": "sql",
+      "description": "SQL queries",
+      "category": "Database",
+      "examples": [
+        "what is sql", "explain sql", "sql commands", "how to write a select query",
+        "how do i join tables", "sql insert update delete", "what is a primary key",
+        "what is a foreign key", "difference between where and having", "what is group by",
+        "types of sql joins"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "SQL is the language for working with relational data. The four everyday statements are SELECT to read, INSERT to add, UPDATE to change and DELETE to remove rows."
+        ],
+        "DETAIL": [
+          "Commands group into DDL for structure (CREATE, ALTER, DROP), DML for data (INSERT, UPDATE, DELETE), DQL for reading (SELECT) and DCL for permissions. A primary key uniquely identifies a row; a foreign key points at another table's primary key and is what joins are built on. INNER JOIN keeps only matching rows, LEFT JOIN keeps every row from the left table. WHERE filters individual rows before grouping and HAVING filters groups after GROUP BY, which is the distinction interviewers ask about most."
+        ],
+        "EXAMPLE": [
+          "SELECT s.name, c.title, AVG(e.marks) AS average\nFROM students s\nINNER JOIN enrolments e ON e.student_id = s.id\nINNER JOIN courses c    ON c.id = e.course_id\nWHERE s.year = 2026\nGROUP BY s.name, c.title\nHAVING AVG(e.marks) > 60\nORDER BY average DESC;"
+        ]
+      }
+    },
+    {
+      "name": "database",
+      "description": "Databases in general",
+      "category": "Database",
+      "examples": [
+        "what is a database", "explain databases", "why use a database",
+        "what is a relational database", "sql vs nosql", "what is normalization",
+        "what is a dbms", "what is acid", "what is an index in a database"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A database stores organised data so applications can create, read, update and delete it reliably. A relational database holds data in tables of rows and columns linked by keys and is managed by a DBMS such as MySQL or PostgreSQL."
+        ],
+        "DETAIL": [
+          "Relational databases guarantee ACID properties: atomicity so a transaction happens fully or not at all, consistency so rules are never violated, isolation so concurrent transactions do not corrupt each other, and durability so committed data survives a crash. Normalization removes duplicated data by splitting it into related tables, which protects correctness at the cost of more joins. NoSQL databases relax the relational model for flexible schemas and horizontal scale. An index is a lookup structure that makes searching a column fast while making writes slightly slower."
+        ]
+      }
+    },
+    {
+      "name": "spring_boot",
+      "description": "Spring Boot",
+      "category": "Frameworks",
+      "examples": [
+        "what is spring boot", "explain spring boot", "why use spring boot",
+        "what is dependency injection", "what is inversion of control",
+        "what does springbootapplication do", "what is a bean", "spring vs spring boot",
+        "what is auto configuration", "what is a starter dependency"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Spring Boot is a framework that removes most of the setup from Spring applications. Starter dependencies pull in a working stack, auto configuration wires it up from what is on the classpath, and an embedded server means you run a plain jar."
+        ],
+        "DETAIL": [
+          "The core idea underneath is inversion of control: instead of your code creating its dependencies, the Spring container creates them and injects them, which is what makes classes easy to test and swap. Objects managed by the container are called beans, declared with annotations such as @Component, @Service, @Repository and @Configuration. @SpringBootApplication bundles @Configuration, @EnableAutoConfiguration and @ComponentScan into one annotation on the main class."
+        ],
+        "EXAMPLE": [
+          "@SpringBootApplication\npublic class Application {\n    public static void main(String[] args) {\n        SpringApplication.run(Application.class, args);\n    }\n}\n\n@Service\npublic class GreetingService {\n    private final MessageRepository repository;\n\n    // constructor injection, no annotation needed\n    public GreetingService(MessageRepository repository) {\n        this.repository = repository;\n    }\n}"
+        ]
+      }
+    },
+    {
+      "name": "rest_api",
+      "description": "REST APIs",
+      "category": "Frameworks",
+      "examples": [
+        "what is a rest api", "explain rest api", "http get post put delete",
+        "how to build an api", "what is json", "rest controller in spring",
+        "what are http status codes", "what is an endpoint", "difference between put and patch",
+        "what makes an api restful"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "A REST API exposes resources over HTTP. GET reads, POST creates, PUT replaces, PATCH partially updates and DELETE removes, with the data usually carried as JSON."
+        ],
+        "DETAIL": [
+          "REST is a style, not a protocol. Its rules are that every request is stateless and carries everything the server needs, that resources are addressed by URL as nouns rather than verbs (/api/students/7, not /getStudent), and that the HTTP method carries the intent. Status codes tell the caller what happened: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorised, 404 Not Found, 500 Server Error. PUT sends the whole resource while PATCH sends only the changed fields."
+        ],
+        "EXAMPLE": [
+          "@RestController\n@RequestMapping(\"/api/students\")\npublic class StudentController {\n\n    @GetMapping(\"/{id}\")\n    public Student findOne(@PathVariable Long id) {\n        return service.findById(id);\n    }\n\n    @PostMapping\n    @ResponseStatus(HttpStatus.CREATED)\n    public Student create(@Valid @RequestBody Student student) {\n        return service.save(student);\n    }\n}"
+        ]
+      }
+    },
+    {
+      "name": "testing",
+      "description": "Testing Java code",
+      "category": "Frameworks",
+      "examples": [
+        "why write tests", "what is unit testing", "java testing", "junit explained",
+        "unit test versus integration test", "how do i test spring boot", "what is mocking",
+        "what is test driven development", "what are assertions"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Automated tests check that code behaves as expected, every time it changes. A unit test isolates one class, while an integration test checks several components working together."
+        ],
+        "DETAIL": [
+          "JUnit 5 is the standard framework: mark a method @Test and assert the outcome with assertEquals, assertTrue or assertThrows. Mocking libraries such as Mockito replace a class's collaborators with stand-ins so you test one thing at a time. Spring Boot gives @SpringBootTest for full context tests and slices such as @WebMvcTest for faster focused ones. Test driven development writes the failing test first, which tends to produce simpler designs because you experience the API as a caller before you build it."
+        ],
+        "EXAMPLE": [
+          "class CalculatorTest {\n\n    @Test\n    void addsTwoNumbers() {\n        Calculator calculator = new Calculator();\n        assertEquals(7, calculator.add(3, 4));\n    }\n\n    @Test\n    void rejectsDivisionByZero() {\n        assertThrows(ArithmeticException.class, () -> new Calculator().divide(1, 0));\n    }\n}"
+        ]
+      }
+    },
+    {
+      "name": "git",
+      "description": "Git and version control",
+      "category": "Frameworks",
+      "examples": [
+        "what is git", "why use version control", "git commands", "what is a commit",
+        "what is a branch", "difference between git and github", "what is a merge conflict",
+        "how to push code", "what is a pull request"
+      ],
+      "responses": {
+        "PRIMARY": [
+          "Git is a distributed version control system that records snapshots of your project so you can review history, work on parallel branches and undo mistakes. GitHub is a hosting service built around Git, not the same thing."
+        ],
+        "DETAIL": [
+          "The everyday flow is: change files, stage them with git add, record them with git commit, and publish with git push. A branch is a movable pointer to a commit, which makes starting a feature almost free. A merge conflict happens when two branches change the same lines and Git cannot decide which to keep, so it marks the file and asks you. A pull request is a review step offered by the hosting platform rather than a Git feature itself."
+        ],
+        "EXAMPLE": [
+          "git status\ngit add .\ngit commit -m \"Add intent classifier\"\ngit checkout -b feature/nlp-pipeline\ngit push -u origin feature/nlp-pipeline\ngit log --oneline --graph"
+        ]
+      }
+    }
+  ]
+}
