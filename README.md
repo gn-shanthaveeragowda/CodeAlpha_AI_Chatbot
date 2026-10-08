@@ -788,5 +788,5 @@ The Results section references:
 
 ![Home Page](Home.png)
 
-![Conversation Page](Student_records.png)
+![Conversation Page](conversation.png)
 
