@@ -1,306 +1,794 @@
-# CodeMate — AI Chatbot (Task 3)
+# CodeMate — AI Programming Chatbot
 
-A Java-based chatbot for interactive Q&A on programming topics, built with
-Spring Boot. It combines a **hand-written NLP pipeline**, a **from-scratch
-ensemble machine learning classifier**, and a **rule engine**, with a web
-interface, a Swing desktop GUI, and a console mode all backed by the same
-trained model.
+CodeMate is a Java-based chatbot built to help users learn and explore programming concepts through an interactive conversation.
 
-Built on top of an existing Spring Boot scaffold; this document describes
-what was added to satisfy the Task 3 brief (NLP techniques, machine learning
-or rule-based logic, FAQ training, and a GUI/web interface).
+Instead of relying only on predefined answers, CodeMate combines a custom **NLP pipeline**, **machine learning**, **rule-based logic**, and **conversation context** to understand questions and decide how they should be answered.
+
+The project also includes a web interface, a Java Swing desktop application, and a console interface, all using the same chatbot engine.
 
 ---
 
-## 1. Quick start
+## What CodeMate Can Do
 
-```bash
-mvn spring-boot:run                 # web interface only, at http://localhost:8081
-mvn spring-boot:run -Dspring-boot.run.arguments=--gui       # + Swing desktop window
-mvn spring-boot:run -Dspring-boot.run.arguments=--console   # + interactive terminal
+### Understand User Questions
+
+CodeMate processes user messages using a custom NLP pipeline. The processing includes:
+
+- Text normalization
+- Tokenization
+- Spell correction
+- Synonym expansion
+- Stop-word removal
+- Porter stemming
+- Unigram and bigram features
+- Sentiment detection
+- Question-type detection
+
+This allows the chatbot to work with different ways of asking the same type of question instead of depending only on exact phrases.
+
+### Use Machine Learning
+
+The chatbot uses three classification approaches:
+
+- **Multinomial Naive Bayes**
+- **TF-IDF cosine similarity**
+- **Keyword coverage**
+
+These are combined into an ensemble model to determine the most likely intent for a user's question.
+
+The default weights are:
+
+```text
+Naive Bayes          0.35
+Cosine Similarity    0.45
+Keyword Coverage     0.20
 ```
 
-Or build the jar and run it directly:
+### Handle Simple Tasks Directly
 
-```bash
-mvn clean package
-java -jar target/ai-chatbot-0.0.1-SNAPSHOT.jar
-java -jar target/ai-chatbot-0.0.1-SNAPSHOT.jar --gui
-java -jar target/ai-chatbot-0.0.1-SNAPSHOT.jar --console
+Not every question needs machine learning.
+
+CodeMate has a rule engine for requests such as:
+
+- Current time
+- Current date
+- Arithmetic calculations
+
+These are handled directly by the rule engine.
+
+### Remember the Conversation
+
+CodeMate keeps track of the current conversation session.
+
+For example, if a user first asks about a programming concept and then says:
+
+```text
+Tell me more
 ```
 
-Run the tests:
+or:
 
-```bash
-mvn test
+```text
+Show me an example
 ```
 
-On first startup the bot seeds its knowledge base from
-`src/main/resources/faq-dataset.json` into the H2 database (stored at
-`./data/ai_chatbot.mv.db`) and trains the classifier. Subsequent restarts skip
-re-seeding anything already present, so training data added while the app was
-running — through feedback or the Teach tab — survives a restart.
+the chatbot can continue from the previous topic instead of treating the message as a completely new question.
+
+If the model is not confident enough, it can also ask the user for clarification instead of giving a random answer.
+
+### Learn From Feedback
+
+The chatbot can be improved while it is running.
+
+Users can:
+
+- Give thumbs-up or thumbs-down feedback
+- Correct an intent
+- Add new training examples
+- Create new intents
+- Use the Teach interface to add knowledge
+
+Training changes can be applied without restarting the application.
 
 ---
 
-## 2. What's in the box
+## Interfaces
 
-| Area | What it does | Where |
-|---|---|---|
-| **NLP pipeline** | Normalizes, spell-corrects, expands synonyms, removes stop words, stems (Porter algorithm), extracts unigram + bigram features, detects sentiment and question type | `com.aichatbot.nlp` |
-| **Machine learning** | Multinomial Naive Bayes + TF-IDF cosine similarity + keyword coverage, blended into one ensemble; leave-one-out cross-validation | `com.aichatbot.ml` |
-| **Rule engine** | Deterministic answers for time, date and arithmetic — things no amount of training data can supply | `com.aichatbot.service.RuleEngine` |
-| **Dialogue management** | Session-scoped context so "tell me more" / "show me an example" continue the previous topic; a clarification band instead of confident wrong guesses | `com.aichatbot.service.ConversationContextService`, `ChatbotService` |
-| **Online learning** | Thumbs up/down feedback, intent correction, and a Teach tab all retrain the model live, no restart | `com.aichatbot.service.LearningService` |
-| **FAQ knowledge base** | 41 intents, 362 training examples, 120 layered answers (primary / detail / example) | `src/main/resources/faq-dataset.json` |
-| **Interfaces** | Responsive web UI (chat, insights, teach), a Swing desktop client, a console REPL — all calling the same `ChatbotService` | `static/`, `com.aichatbot.gui` |
-| **Persistence** | H2 file database by default; a MySQL profile is one property swap away | `application.properties`, `application-mysql.properties.example` |
+CodeMate currently provides three ways to interact with the chatbot:
 
----
-
-## 3. How a message is answered
-
-```
-User message
-    |
-    v
-+----------------------------------------------------------------+
-| NLP PIPELINE (NLPProcessor)                                    |
-|  1. Normalize    - lowercase, expand contractions & shorthand, |
-|                     strip accents, collapse elongated letters  |
-|  2. Tokenize     - split on whitespace                         |
-|  3. Spell-check  - Levenshtein distance against the corpus     |
-|  4. Synonyms     - "oops" -> "oop", "db" -> "database", ...    |
-|  5. Stop words   - removed, except question words which the    |
-|                     question-type detector still needs         |
-|  6. Stem         - Porter algorithm                            |
-|  7. N-grams      - unigrams + bigrams as classifier features   |
-+----------------------------------------------------------------+
-    |
-    v
-+----------------------+  yes  +--------------------------------+
-| 1. RULE ENGINE hit?  |------>| Return the computed answer      |
-|    (time/date/maths) |       | (confidence 1.0, no ML used)    |
-+-----------+----------+       +--------------------------------+
-    | no
-    v
-+----------------------+  yes  +--------------------------------+
-| 2. Follow-up on the  |------>| Serve the DETAIL or EXAMPLE     |
-|    previous topic?   |       | layer of the last intent        |
-|    ("tell me more")  |       +--------------------------------+
-+-----------+----------+
-    | no
-    v
-+------------------------------------------------------------------+
-| 3. ENSEMBLE CLASSIFIER                                            |
-|    score = 0.35 x NaiveBayes + 0.45 x CosineSimilarity            |
-|            + 0.20 x KeywordCoverage                               |
-+-----------+--------------------------------------------------------+
-    |
-    +- confidence >= 0.35   -> answer the top intent (MODEL)
-    +- 0.18 <= conf < 0.35  -> ask a clarifying question, log the gap
-    +- confidence < 0.18    -> fall back honestly, log the gap
-```
-
-Every turn is persisted to `chat_history` with its intent, confidence,
-strategy, sentiment and response time, which is what powers the Insights tab.
-
----
-
-## 4. The machine learning, in more detail
-
-Three independent signals vote, and their scores are blended rather than
-picking a single "winner" model:
-
-- **Multinomial Naive Bayes** (`NaiveBayesClassifier`) — learns `P(intent)`
-  and `P(word | intent)` from the training data with Laplace smoothing, in log
-  space to avoid underflow. If a message shares **no** vocabulary with
-  anything trained, it abstains rather than falling back to the class priors
-  (an early version didn't do this — see §5).
-- **TF-IDF cosine similarity** (`TfIdfVectorizer`, `CosineSimilarityClassifier`)
-  — every training example becomes a unit-length TF-IDF vector; a message is
-  compared against all of them, and the *k* nearest neighbours vote, weighted
-  by similarity. Rare, specific words (`polymorphism`) count for more than
-  common ones (`what`, `java`).
-- **Keyword coverage** — what fraction of the message's features the winning
-  intent was actually trained on. This is the guard rail against a
-  fluent-sounding wrong answer.
-
-An **exact match** to a stored training example short-circuits the blend to
-confidence 1.0 — this is effectively the rule-based half of the classifier,
-guaranteeing that a question typed exactly as trained is never second-guessed
-by the statistics.
-
-### Evaluating the classifier
-
-`ModelEvaluator` runs **leave-one-out cross-validation**: every example is
-held out in turn, the model is retrained on the rest, and the held-out example
-is predicted. This runs automatically on a background thread after every
-training run and its report is available at `GET /api/model/metrics` and on
-the Insights tab.
-
-Two numbers are worth reporting, and they measure different things:
-
-| Metric | Result | What it means |
-|---|---|---|
-| Leave-one-out cross-validation, full corpus (362 examples, 41 intents) | **61.6% accuracy, macro F1 0.64** | The conservative worst case. Many training examples share a word with nothing else in their own intent, so removing that one example genuinely removes all the evidence for it — the model is being asked to predict from strictly less information than it will ever have live. |
-| Held-out set of 60 realistic paraphrases *never seen in training* (typos, shorthand, indirect wording — see `src/test/resources/test-questions.json`) | **93.3% top-1, 96.7% top-3** | A closer approximation of real usage, where the model has its full 362-example vocabulary to draw on. |
-
-A weight sweep over the held-out set confirmed the ensemble is not just
-convenient but actually the best configuration tried:
-
-| Configuration | Top-1 accuracy |
+| Interface | Description |
 |---|---|
-| Naive Bayes alone | 93.3% |
-| Cosine similarity alone | 91.7% |
-| Keyword coverage alone | 90.0% |
-| **Ensemble (0.35 / 0.45 / 0.20 — the default)** | **93.3%** |
+| **Web** | Browser-based responsive chatbot interface |
+| **Desktop** | Java Swing application |
+| **Console** | Interactive terminal interface |
 
-The ensemble matches the best single model rather than being dragged down by
-the weaker ones, and its abstentions are more honest (see the abstain fix in
-§5), which is the real reason to prefer it over Naive Bayes alone.
+All three interfaces use the same underlying chatbot engine and trained model.
 
 ---
 
-## 5. Two bugs worth knowing about (found by testing, not assumed away)
+## Technology Stack
 
-**Question words were dominating the classifier.** The first version of the
-stop-word list kept `what`, `how`, `why` because they seemed meaningful. In
-practice they were the *most frequent* tokens in the whole corpus, so
-`"what is git"` and `"what are you"` shared their strongest feature and the
-classifier confused `bot_identity`/`greeting` constantly. Moving them to the
-stop list (while the question-type detector still reads them **before** that
-filter runs) took cross-validation accuracy from 53.9% to 61.6%.
-
-**Naive Bayes never abstained.** With zero recognised words, every intent's
-score reduced to its prior probability, so the single largest training
-intent always "won" — a confident, fluent, completely unfounded answer. The
-fix: if a message shares no vocabulary with the training data at all, Naive
-Bayes now returns no predictions, and even a partial match scales its
-confidence down by how much of the message it actually recognised. This
-turned silently-wrong answers into honest abstentions and pushed the fallback
-path to do its job properly.
+| Technology | Used For |
+|---|---|
+| Java | Main programming language |
+| Spring Boot | Backend and application framework |
+| Maven | Build and dependency management |
+| HTML / CSS / JavaScript | Web interface |
+| Java Swing | Desktop interface |
+| H2 | Default database |
+| MySQL | Optional database |
+| REST API | Communication between the interface and chatbot services |
+| Git / GitHub | Version control |
 
 ---
 
-## 6. Extending the knowledge base
+## How It Works
 
-**Through the running app (no restart needed):**
-- `POST /api/training/examples` — add a new phrasing to an existing intent
-- `POST /api/training/intents` — create a brand-new topic (examples + answers)
-- The **Teach** tab in the web UI wraps both of these
-- A thumbs-down on an answer, with a corrected topic, teaches the correction immediately
+A user message goes through several stages before CodeMate generates a response.
 
-**By editing the dataset file** (`src/main/resources/faq-dataset.json`), then
-calling `POST /api/training/reload-dataset` or restarting — useful for adding
-a large batch of FAQs at once. Each intent needs:
+```text
+User Question
+     |
+     v
+NLP Processing
+     |
+     v
+Rule Engine
+     |
+     +------ Rule Match ------> Direct Answer
+     |
+     v
+Conversation Context
+     |
+     +------ Follow-up -------> Contextual Answer
+     |
+     v
+Ensemble Classifier
+     |
+     +-----------------------------+
+     |             |               |
+     v             v               v
+Naive Bayes   TF-IDF Similarity   Keywords
+     |             |               |
+     +-------------+---------------+
+                   |
+                   v
+             Confidence
+                   |
+          +--------+--------+
+          |        |        |
+        High    Medium      Low
+          |        |        |
+          v        v        v
+       Answer   Clarify   Fallback
+```
+
+Each conversation turn is also stored with information such as:
+
+- Intent
+- Confidence
+- Strategy
+- Sentiment
+- Response time
+
+This information is later used by the application's analytics and Insights functionality.
+
+---
+
+## Machine Learning
+
+### Multinomial Naive Bayes
+
+The Naive Bayes classifier learns the probability of an intent and the probability of words occurring within that intent.
+
+It uses Laplace smoothing and logarithmic probabilities.
+
+The implementation also avoids blindly selecting an intent when the message contains no vocabulary known to the training data.
+
+---
+
+### TF-IDF and Cosine Similarity
+
+Training questions are converted into TF-IDF vectors.
+
+When a new question arrives, CodeMate compares it with the stored examples using cosine similarity.
+
+This helps specific programming terms carry more weight when identifying an intent.
+
+For example:
+
+```text
+polymorphism
+inheritance
+JDBC
+```
+
+can be more useful for classification than very common words such as:
+
+```text
+what
+how
+java
+```
+
+---
+
+### Keyword Coverage
+
+Keyword coverage checks how much of the user's message matches the features that the predicted intent was trained on.
+
+This acts as another check before the chatbot commits to an answer.
+
+---
+
+## Confidence Handling
+
+CodeMate uses confidence thresholds to decide how it should respond.
+
+```text
+Confidence >= 0.35
+        |
+        +--> Answer
+
+0.18 <= Confidence < 0.35
+        |
+        +--> Ask for clarification
+
+Confidence < 0.18
+        |
+        +--> Fallback response
+```
+
+This is important because the goal is not simply to produce an answer for every question, but to avoid confidently answering when there is not enough evidence.
+
+---
+
+# Knowledge Base
+
+The chatbot's training data is stored in:
+
+```text
+src/main/resources/faq-dataset.json
+```
+
+The current dataset contains:
+
+| Item | Count |
+|---|---:|
+| Intents | **41** |
+| Training examples | **362** |
+| Layered answers | **120** |
+
+Each intent can contain different response levels:
+
+```text
+PRIMARY
+DETAIL
+EXAMPLE
+```
+
+For example:
 
 ```json
 {
   "name": "enum_types",
   "description": "Enums in Java",
   "category": "Java Basics",
-  "examples": ["what is an enum", "how do enums work", "enum in java"],
+  "examples": [
+    "what is an enum",
+    "how do enums work",
+    "enum in java"
+  ],
   "responses": {
-    "PRIMARY": ["An enum defines a fixed set of named constants..."],
-    "DETAIL": ["Every enum implicitly extends java.lang.Enum..."],
-    "EXAMPLE": ["enum Day { MONDAY, TUESDAY, ... }"]
+    "PRIMARY": [
+      "An enum defines a fixed set of named constants..."
+    ],
+    "DETAIL": [
+      "Every enum implicitly extends java.lang.Enum..."
+    ],
+    "EXAMPLE": [
+      "enum Day { MONDAY, TUESDAY, ... }"
+    ]
   }
 }
 ```
 
 ---
 
-## 7. API reference
+# Model Evaluation
 
-| Method & path | Purpose |
-|---|---|
-| `POST /api/chat` | `{message, sessionId}` -> the bot's answer with full reasoning metadata |
-| `DELETE /api/chat/session/{id}` | Clears a session's follow-up context |
-| `GET /api/chat/history` | Last 100 messages across all sessions |
-| `GET /api/chat/history/{sessionId}` | Full transcript of one session |
-| `POST /api/feedback` | `{messageId, helpful, correctedIntent?}` -> rate an answer, optionally correct it |
-| `POST /api/training/examples` | Teach a new phrasing for an existing intent |
-| `POST /api/training/intents` | Create a whole new intent |
-| `POST /api/training/reload-dataset` | Re-read `faq-dataset.json` |
-| `GET /api/training/gaps` | Questions the bot couldn't confidently answer |
-| `GET /api/intents` / `/by-category` / `/{name}` / `/names` | Browse the knowledge base |
-| `GET /api/model` | Classifier status: weights, vocabulary size, last training run |
-| `GET /api/model/metrics` | Full cross-validation report |
-| `POST /api/model/retrain` | Force a retrain right now |
-| `GET`/`POST /api/model/analyze` | Dry run: shows every NLP stage and every classifier score for a message, **without** answering or logging it — the tool to use in a demo |
-| `GET /api/analytics` | Everything behind the Insights tab |
-| `GET /api/health` | Liveness + whether the model has finished training |
+The project includes two main evaluation approaches:
 
----
+1. Leave-one-out cross-validation
+2. A held-out set of realistic paraphrases
 
-## 8. Project layout
+### Results
 
-```
-src/main/java/com/aichatbot/
-├── nlp/            TextNormalizer, StopWords, SynonymDictionary, PorterStemmer,
-│                   SpellCorrector, SentimentAnalyzer, NLPProcessor (orchestrator)
-├── ml/             IntentClassifier (interface), NaiveBayesClassifier,
-│                   TfIdfVectorizer, CosineSimilarityClassifier,
-│                   EnsembleClassifier, ModelEvaluator
-├── service/        ChatbotService (turn decision logic), RuleEngine,
-│                   ConversationContextService, ModelTrainingService,
-│                   LearningService, AnalyticsService, DataInitializer
-├── entity/         Intent, Response, TrainingExample, ChatMessage, UnansweredQuestion
-├── repository/     Spring Data JPA repositories for each entity
-├── dto/            ChatRequest/Response, FeedbackRequest, TrainingRequest
-├── http/           REST controllers (Chat, History, Feedback, Training,
-│                   Intent, Model, Analytics, Health) + ApiExceptionHandler
-├── gui/            SwingChatbotClient (--gui), ConsoleChatRunner (--console)
-├── config/         StartupRunner (seed -> train, in order)
-└── AiChatbotApplication.java
+| Evaluation | Result |
+|---|---:|
+| Leave-one-out accuracy | **61.6%** |
+| Macro F1 | **0.64** |
+| Held-out top-1 accuracy | **93.3%** |
+| Held-out top-3 accuracy | **96.7%** |
 
-src/main/resources/
-├── faq-dataset.json         The knowledge base: 41 intents, 362 examples, 120 answers
-├── application.properties   H2 config, confidence thresholds, ensemble weights
-└── static/                  index.html, app.js, styles.css (chat / insights / teach tabs)
+The held-out dataset contains **60 questions** that were not used during training.
 
-src/test/java/com/aichatbot/
-├── nlp/            Tests for the stemmer, normalizer, spell corrector,
-│                   sentiment analyzer and full pipeline
-├── ml/             Tests for Naive Bayes, TF-IDF, cosine similarity, ensemble
-└── service/        Tests for the rule engine
+The complete training dataset contains **362 examples across 41 intents**.
 
-src/test/resources/test-questions.json   60 held-out paraphrases for accuracy evaluation
+### Classifier Comparison
+
+| Classifier | Top-1 Accuracy |
+|---|---:|
+| Naive Bayes | 93.3% |
+| Cosine Similarity | 91.7% |
+| Keyword Coverage | 90.0% |
+| **Ensemble** | **93.3%** |
+
+The ensemble uses the default weights:
+
+```text
+0.35 / 0.45 / 0.20
 ```
 
 ---
 
-## 9. Configuration
+# Results
 
-All in `application.properties`:
+The final application brings the NLP pipeline, machine learning model, rule engine, conversation handling, and user interface together into a working programming chatbot.
+
+The screenshots below show the actual web application interface and conversation flow.
+
+## Main Interface
+
+The main page provides the starting point for interacting with CodeMate. Users can select or explore programming topics and begin a conversation with the chatbot.
+
+<p align="center">
+  <img src="screenshots/home.png" alt="CodeMate main interface" width="92%">
+</p>
+
+## Chat Interface
+
+The conversation view shows the interaction between the user and CodeMate, allowing programming questions and follow-up questions to be handled within the same session.
+
+<p align="center">
+  <img src="screenshots/conversation.png" alt="CodeMate conversation interface" width="92%">
+</p>
+
+## Evaluation Results
+
+The current implementation produced the following results on the available evaluation datasets:
+
+```text
+Training intents       : 41
+Training examples      : 362
+Held-out questions     : 60
+
+Cross-validation       : 61.6% accuracy
+Macro F1               : 0.64
+
+Held-out Top-1         : 93.3%
+Held-out Top-3         : 96.7%
+```
+
+These numbers describe the current implementation and should be considered in the context of the project's training dataset size.
+
+---
+
+# Improvements Found During Testing
+
+Testing the chatbot revealed a couple of issues that were addressed during development.
+
+### Question Words Affecting Classification
+
+Initially, words such as:
+
+```text
+what
+how
+why
+```
+
+were retained as useful features.
+
+Because these words occur frequently across different questions, they sometimes caused unrelated intents to look similar.
+
+Moving them into the stop-word list while allowing the question-type detector to process them beforehand improved cross-validation accuracy:
+
+```text
+Before: 53.9%
+After : 61.6%
+```
+
+### Naive Bayes Overconfidence
+
+The original classifier could select an intent even when a question contained no vocabulary known to the model.
+
+That could result in an answer that sounded confident but was not supported by the training data.
+
+The implementation was changed so that the classifier can abstain when there is not enough evidence and reduce confidence when only part of the message is recognized.
+
+---
+
+# Adding New Knowledge
+
+There are two ways to add new knowledge to CodeMate.
+
+### Through the Application
+
+The application provides APIs for adding training data:
+
+```http
+POST /api/training/examples
+```
+
+Create a new intent:
+
+```http
+POST /api/training/intents
+```
+
+The **Teach** tab provides a more convenient interface for these operations.
+
+User feedback can also be used to correct an incorrect intent.
+
+### Through the Dataset
+
+The main dataset is:
+
+```text
+src/main/resources/faq-dataset.json
+```
+
+After making changes, reload it with:
+
+```http
+POST /api/training/reload-dataset
+```
+
+or restart the application.
+
+---
+
+# REST API
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/chat` | Send a question to the chatbot |
+| `DELETE` | `/api/chat/session/{id}` | Clear session context |
+| `GET` | `/api/chat/history` | Get recent chat history |
+| `GET` | `/api/chat/history/{sessionId}` | Get a session transcript |
+| `POST` | `/api/feedback` | Submit feedback or correct an intent |
+| `POST` | `/api/training/examples` | Add a training example |
+| `POST` | `/api/training/intents` | Create an intent |
+| `POST` | `/api/training/reload-dataset` | Reload the FAQ dataset |
+| `GET` | `/api/training/gaps` | View questions the bot could not answer confidently |
+| `GET` | `/api/intents` | Browse intents |
+| `GET` | `/api/intents/by-category` | Browse intents by category |
+| `GET` | `/api/intents/{name}` | Get a specific intent |
+| `GET` | `/api/intents/names` | Get intent names |
+| `GET` | `/api/model` | View model status |
+| `GET` | `/api/model/metrics` | View evaluation metrics |
+| `POST` | `/api/model/retrain` | Retrain the model |
+| `GET/POST` | `/api/model/analyze` | Inspect NLP and classifier processing |
+| `GET` | `/api/analytics` | Get chatbot analytics |
+| `GET` | `/api/health` | Check application health |
+
+---
+
+# Project Structure
+
+```text
+src/
+├── main/
+│   ├── java/
+│   │   └── com/aichatbot/
+│   │       ├── nlp/
+│   │       ├── ml/
+│   │       ├── service/
+│   │       ├── entity/
+│   │       ├── repository/
+│   │       ├── dto/
+│   │       ├── http/
+│   │       ├── gui/
+│   │       └── config/
+│   │
+│   └── resources/
+│       ├── faq-dataset.json
+│       ├── application.properties
+│       ├── application-mysql.properties.example
+│       └── static/
+│           ├── index.html
+│           ├── app.js
+│           └── styles.css
+│
+└── test/
+    ├── java/com/aichatbot/
+    │   ├── nlp/
+    │   ├── ml/
+    │   └── service/
+    │
+    └── resources/
+        └── test-questions.json
+```
+
+---
+
+# Configuration
+
+The main configuration file is:
+
+```text
+src/main/resources/application.properties
+```
+
+Important settings include:
 
 ```properties
-chatbot.confidence-threshold=0.35   # minimum confidence to commit to an answer
-chatbot.clarify-threshold=0.18      # below this, fall back entirely; between the two, ask a clarifying question
+chatbot.confidence-threshold=0.35
+chatbot.clarify-threshold=0.18
+
 chatbot.weights.naive-bayes=0.35
 chatbot.weights.similarity=0.45
 chatbot.weights.keyword=0.20
-chatbot.learning.reinforce-below=0.75   # a positive rating below this confidence reinforces the training data
-chatbot.evaluation.enabled=true         # cross-validate after every retrain (background thread)
-```
 
-To use MySQL instead of the bundled H2 database, copy the contents of
-`application-mysql.properties.example` into `application.properties` and set
-a real password.
+chatbot.learning.reinforce-below=0.75
+chatbot.evaluation.enabled=true
+```
 
 ---
 
-## 10. Honesty about scope
+# Database
 
-This satisfies the Task 3 checklist (Java-based chatbot, NLP techniques,
-machine-learning/rule-based logic, FAQ training, GUI/web interface) with:
-real NLP (not just lowercasing), a genuine trained classifier (not a lookup
-table), a working rule engine, a knowledge base that grows at runtime, and
-three separate user interfaces sharing one engine.
+CodeMate uses an H2 file database by default:
 
-What it is *not*: a deep-learning or transformer-based system, and the
-training corpus (362 examples across 41 topics) is small enough that
-leave-one-out cross-validation is a conservative rather than a definitive
-accuracy figure — see §4 for why the held-out paraphrase test is the more
-representative number.
+```text
+./data/ai_chatbot.mv.db
+```
+
+On the first startup, the application:
+
+1. Loads the FAQ dataset.
+2. Seeds the database.
+3. Trains the classifier.
+4. Starts the application.
+
+Training data added while using the application is preserved across restarts.
+
+MySQL configuration is also provided through:
+
+```text
+application-mysql.properties.example
+```
+
+---
+
+# Running the Project
+
+## Requirements
+
+Before running CodeMate, make sure you have:
+
+- Java JDK
+- Maven
+- Git
+- A modern web browser
+
+Check Java:
+
+```bash
+java -version
+```
+
+Check Maven:
+
+```bash
+mvn -version
+```
+
+## Clone the Repository
+
+```bash
+git clone <your-repository-url>
+cd <project-directory>
+```
+
+## Start the Web Application
+
+```bash
+mvn spring-boot:run
+```
+
+Open:
+
+```text
+http://localhost:8081
+```
+
+## Start the Desktop Version
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments=--gui
+```
+
+## Start the Console Version
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments=--console
+```
+
+---
+
+# Build
+
+To create the JAR:
+
+```bash
+mvn clean package
+```
+
+Run the web version:
+
+```bash
+java -jar target/ai-chatbot-0.0.1-SNAPSHOT.jar
+```
+
+Run the desktop version:
+
+```bash
+java -jar target/ai-chatbot-0.0.1-SNAPSHOT.jar --gui
+```
+
+Run the console version:
+
+```bash
+java -jar target/ai-chatbot-0.0.1-SNAPSHOT.jar --console
+```
+
+---
+
+# Testing
+
+Run the test suite with:
+
+```bash
+mvn test
+```
+
+The project includes tests for areas such as:
+
+- NLP processing
+- Text normalization
+- Porter stemming
+- Spell correction
+- Sentiment analysis
+- Naive Bayes
+- TF-IDF
+- Cosine similarity
+- Ensemble classification
+- Rule engine
+
+---
+
+# Model Analysis
+
+CodeMate also provides an analysis endpoint for inspecting how a message moves through the NLP and classification pipeline.
+
+```http
+GET /api/model/analyze
+```
+
+or:
+
+```http
+POST /api/model/analyze
+```
+
+This is useful when testing or demonstrating how the chatbot processes a particular input.
+
+---
+
+# Analytics
+
+Conversation information such as the following is stored for analytics:
+
+- Intent
+- Confidence
+- Strategy
+- Sentiment
+- Response time
+
+The analytics API is:
+
+```http
+GET /api/analytics
+```
+
+---
+
+# Limitations
+
+CodeMate currently has a knowledge base of:
+
+```text
+41 intents
+362 training examples
+```
+
+The training dataset is relatively small, so the evaluation results should be viewed within the context of the current dataset.
+
+The leave-one-out result is also conservative because removing an individual example can remove important vocabulary for that intent.
+
+CodeMate is currently a traditional NLP and machine-learning system rather than a deep-learning or transformer-based chatbot.
+
+---
+
+# Future Improvements
+
+Some areas that could be explored in future versions include:
+
+- Expanding the training dataset
+- Adding more programming topics
+- Adding more paraphrased questions
+- Improving classification robustness
+- Expanding analytics
+- Adding more rule-based capabilities
+- Adding additional interfaces
+- Improving multilingual support
+- Exploring more advanced machine-learning approaches
+
+---
+
+# Contributing
+
+If you want to contribute:
+
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes.
+4. Test the changes.
+5. Commit your changes.
+6. Push the branch.
+7. Open a Pull Request.
+
+---
+
+# License
+
+This project is intended for **educational and learning purposes**.
+
+---
+
+# Author
+
+**G N Shanthaveeragowda**
+
+Student / Software Developer
+
+GitHub: `https://github.com/gn-shanthaveeragowda`
+
+---
+
+## Repository Structure for Screenshots
+
+Make sure the screenshots are stored inside the repository like this:
+
+```text
+project-root/
+│
+├── src/
+-----
+│   ├── home.png
+│   └── conversation.png
+│
+├── pom.xml
+└── README.md
+```
+
+The Results section references:
+
+```text
+home.png
+conversation.png
+```
+
+Once those two files are uploaded to GitHub, they will automatically appear in the **Results** section of the README.
