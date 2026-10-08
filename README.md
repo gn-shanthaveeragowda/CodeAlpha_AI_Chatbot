@@ -786,9 +786,7 @@ project-root/
 
 The Results section references:
 
-```text
-home.png
-conversation.png
-```
+![Home Page](Home.png)
 
-Once those two files are uploaded to GitHub, they will automatically appear in the **Results** section of the README.
+![Conversation Page](Student_records.png)
+
